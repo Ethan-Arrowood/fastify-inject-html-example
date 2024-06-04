@@ -2,7 +2,7 @@
 
 Recently, I've been exploring how to build a live reload server from scratch (keep an eye out for a future post on this). During this exploration, I had to figure out how to inject HTML into the payload of a [fastify](https://fastify.dev) static file server ([`@fastify/static`](https://github.com/fastify/fastify-static)) response. My solution utilizes the Node.js [Buffer](https://nodejs.org/api/buffer.html) API and a custom Node.js [Transform](https://nodejs.org/api/stream.html#class-streamtransform) stream. Let's dive in!
 
-> [!Note]
+> [!NOTE]
 >
 > The source code is available here: https://github.com/Ethan-Arrowood/fastify-inject-html-example
 
@@ -44,7 +44,7 @@ const INJECT_CODE = fs.readFileSync(
 
 The `ENCODED_CLOSING_HTML_TAG` is the encoded string `'</html>'`. You can generate this for yourself using: `new TextEncoder().encode('</html>')`. The `INJECT_CODE` variable is a Node.js Buffer since no encoding was passed to `fs.readFileSync()`.
 
-> [!Tip]
+> [!TIP]
 >
 > **What is a Node.js Buffer?**
 >
@@ -105,6 +105,8 @@ server.addHook("onSend", function onSendHook(request, reply, payload, done) {
         },
       }),
     );
+
+    return done(null, transformedPayload);
   }
   return done(null, payload);
 });
@@ -145,6 +147,8 @@ server.addHook("onSend", function onSendHook(request, reply, payload, done) {
         },
       }),
     );
+
+    return done(null, transformedPayload);
   }
   return done(null, payload);
 });
@@ -152,7 +156,7 @@ server.addHook("onSend", function onSendHook(request, reply, payload, done) {
 
 The injection logic itself is nothing too special. It finds the last index of the closing HTML tag (`'</html>'`), and then injects `INJECT_CODE` immediately before it by creating a new `Buffer` instance and filling it with the appropriate slices.
 
-> [!Tip]
+> [!TIP]
 >
 > A better way to inject HTML is to use a HTML parsing library such as [node-html-parser](https://www.npmjs.com/package/node-html-parser). It enables you to more precisely manipulate the HTML through APIs such as `htmlElement.insertAdjacentHTML("beforeend", /* inject code */);`.
 
