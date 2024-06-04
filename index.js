@@ -2,8 +2,9 @@ import fastify from "fastify";
 import fastifyStatic from "@fastify/static";
 import path from "node:path";
 import stream from "node:stream";
+import fs from "node:fs";
 
-// Initialze the Fastify server
+// Initialize the Fastify server
 const server = fastify({ logger: true });
 
 // and register the static file plugin
@@ -16,8 +17,9 @@ const ENCODED_CLOSING_HTML_TAG = new Uint8Array([
   60, 47, 104, 116, 109, 108, 62,
 ]);
 
-// Set the injected code buffer, this could also be generated from something like fs.readFile('inject.html')
-const INJECT_CODE = Buffer.from(`<script>alert('injected!')</script>`);
+const INJECT_CODE = fs.readFileSync(
+  path.join(import.meta.dirname, "inject.html"),
+);
 
 // Intercept the payload of fastify responses
 // Tip: If you're using this in a larger fastify application, make sure to use encapsulation so this hook only runs for static file routes
@@ -37,13 +39,14 @@ server.addHook("onSend", function onSendHook(request, reply, payload, done) {
             const i = chunk.lastIndexOf(ENCODED_CLOSING_HTML_TAG);
             if (i > 0) {
               const injected = Buffer.alloc(chunk.length + INJECT_CODE.length);
-              injected.fill(chunk.slice(0, i));
-              injected.fill(INJECT_CODE, i);
-              injected.fill(chunk.slice(i), i + INJECT_CODE.length);
+              injected
+                .fill(chunk.slice(0, i))
+                .fill(INJECT_CODE, i)
+                .fill(chunk.slice(i), i + INJECT_CODE.length);
               return callback(null, injected);
             }
 
-            // Tip: A better way to inject HRML would be to use a HTML parsing library such as `node-html-parser`
+            // Tip: A better way to inject HTML is to use a HTML parsing library such as `node-html-parser`
             //      and then using DOM methods such as `htmlElement.insertAdjacentHTML("beforeend", /* inject code */);`.
             //      This is especially important if you are injecting user-provided code as this is a potential security
             //      vulnerability for your application.
