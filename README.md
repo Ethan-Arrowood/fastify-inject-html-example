@@ -56,7 +56,7 @@ Create `inject.html` with the content:
 
 ```html
 <script>
-  alert("injected!");
+  alert("Injected!");
 </script>
 ```
 
